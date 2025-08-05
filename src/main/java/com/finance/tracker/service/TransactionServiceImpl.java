@@ -1,79 +1,89 @@
 package com.finance.tracker.service;
 
-import com.finance.tracker.model.Transaction;
+import com.finance.tracker.dto.TransactionDto;
+import com.finance.tracker.entity.TransactionEntity;
+import com.finance.tracker.mapper.TransactionMapper;
+import com.finance.tracker.repository.TransactionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
     
-    private final Map<Long, Transaction> transactionMap = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
 
-    @Override
-    public List<Transaction> getAllTransactions() {
-        return new ArrayList<>(transactionMap.values());
+    @Autowired
+    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
+        this.transactionRepository = transactionRepository;
+        this.transactionMapper = transactionMapper;
     }
 
     @Override
-    public Transaction getTransactionById(Long id) {
-        Transaction transaction = transactionMap.get(id);
-        if (transaction == null) {
+    public List<TransactionDto> getAllTransactions() {
+        List<TransactionEntity> entities = transactionRepository.findAll();
+        return transactionMapper.entitiesToDtos(entities);
+    }
+
+    @Override
+    public TransactionDto getTransactionById(UUID id) {
+        Optional<TransactionEntity> entityOptional = transactionRepository.findById(id);
+        if (entityOptional.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
-        return transaction;
+        return transactionMapper.entityToDto(entityOptional.get());
     }
 
     @Override
-    public Transaction createTransaction(Transaction transaction) {
-        if (transaction == null) {
+    public TransactionDto createTransaction(TransactionDto transactionDto) {
+        if (transactionDto == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transaction cannot be null");
         }
         
         // Validate required fields
-        if (transaction.getAmount() == null || transaction.getType() == null) {
+        if (transactionDto.getAmount() == null || transactionDto.getType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
-        // Set new ID and save
-        transaction.setId(idGenerator.getAndIncrement());
-        transactionMap.put(transaction.getId(), transaction);
-        return transaction;
+        // Convert DTO to entity, save (UUID is auto-generated), and convert back to DTO
+        TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
+        TransactionEntity savedEntity = transactionRepository.save(entity);
+        return transactionMapper.entityToDto(savedEntity);
     }
 
     @Override
-    public Transaction updateTransaction(Long id, Transaction transaction) {
-        if (!transactionMap.containsKey(id)) {
+    public TransactionDto updateTransaction(UUID id, TransactionDto transactionDto) {
+        if (!transactionRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
 
-        if (transaction == null) {
+        if (transactionDto == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transaction cannot be null");
         }
 
         // Validate required fields
-        if (transaction.getAmount() == null || transaction.getType() == null) {
+        if (transactionDto.getAmount() == null || transactionDto.getType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
-        // Ensure the ID matches the path parameter
-        transaction.setId(id);
-        transactionMap.put(id, transaction);
-        return transaction;
+        // Convert DTO to entity, ensure the ID matches, save, and convert back to DTO
+        TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
+        entity.setId(id);
+        TransactionEntity savedEntity = transactionRepository.save(entity);
+        return transactionMapper.entityToDto(savedEntity);
     }
 
     @Override
-    public void deleteTransaction(Long id) {
-        if (!transactionMap.containsKey(id)) {
+    public void deleteTransaction(UUID id) {
+        if (!transactionRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
-        transactionMap.remove(id);
+        transactionRepository.deleteById(id);
     }
 }
