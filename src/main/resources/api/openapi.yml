@@ -16,7 +16,7 @@ servers:
 
 paths:
   # Authentication endpoints
-  /auth/register:
+  /api/auth/register:
     post:
       tags:
         - Authentication
@@ -39,7 +39,7 @@ paths:
         '400':
           description: Registration failed
           
-  /auth/login:
+  /api/auth/login:
     post:
       tags:
         - Authentication
@@ -63,7 +63,7 @@ paths:
           description: Invalid credentials
           
   # User endpoints
-  /user/profile:
+  /api/user/profile:
     get:
       tags:
         - User
@@ -81,7 +81,7 @@ paths:
         '401':
           description: Unauthorized
 
-  /transactions:
+  /api/transactions:
     get:
       tags:
         - Transactions
@@ -130,7 +130,7 @@ paths:
         '500':
           description: Internal server error
 
-  /transactions/{id}:
+  /api/transactions/{id}:
     get:
       tags:
         - Transactions

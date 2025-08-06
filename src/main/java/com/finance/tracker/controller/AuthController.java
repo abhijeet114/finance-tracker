@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
  * Implements the generated AuthenticationApi interface
  */
 @RestController
-@RequestMapping("/api")
 public class AuthController implements AuthenticationApi {
 
     @Autowired

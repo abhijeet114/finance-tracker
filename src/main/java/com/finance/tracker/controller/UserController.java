@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
  * Implements the generated UserApi interface
  */
 @RestController
-@RequestMapping("/api")
 public class UserController implements UserApi {
 
     @Override
