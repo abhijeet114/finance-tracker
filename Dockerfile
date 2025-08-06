@@ -16,8 +16,7 @@ RUN chmod +x ./mvnw
 COPY src src
 
 # Build the application
-RUN ./mvnw clean generate-sources compile
-RUN ./mvnw clean package
+RUN ./mvnw clean generate-sources compile test package
 
 # Runtime stage
 FROM amazoncorretto:21-alpine

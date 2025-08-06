@@ -6,7 +6,6 @@ import com.finance.tracker.entity.TransactionType;
 import com.finance.tracker.model.Transaction;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -16,9 +15,8 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Test class for TransactionMapper focusing on genuine mapping scenarios
+ * Unit test class for TransactionMapper focusing on mapping logic without database dependencies
  */
-@SpringBootTest
 class TransactionMapperTest {
 
     private final TransactionMapper mapper = Mappers.getMapper(TransactionMapper.class);
