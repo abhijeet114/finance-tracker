@@ -2,9 +2,13 @@ package com.finance.tracker.service;
 
 import com.finance.tracker.dto.TransactionDto;
 import com.finance.tracker.entity.TransactionEntity;
+import com.finance.tracker.entity.UserEntity;
 import com.finance.tracker.mapper.TransactionMapper;
 import com.finance.tracker.repository.TransactionRepository;
+import com.finance.tracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,22 +23,39 @@ public class TransactionServiceImpl implements TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final UserRepository userRepository;
 
     @Autowired
-    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, 
+                                TransactionMapper transactionMapper, 
+                                UserRepository userRepository) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
+        this.userRepository = userRepository;
+    }
+
+    private UserEntity getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        
+        UserEntity user = (UserEntity) authentication.getPrincipal();
+        return user;
     }
 
     @Override
     public List<TransactionDto> getAllTransactions() {
-        List<TransactionEntity> entities = transactionRepository.findAll();
+        UserEntity currentUser = getCurrentUser();
+        List<TransactionEntity> entities = transactionRepository.findByUser(currentUser);
         return transactionMapper.entitiesToDtos(entities);
     }
 
     @Override
     public TransactionDto getTransactionById(UUID id) {
-        Optional<TransactionEntity> entityOptional = transactionRepository.findById(id);
+        UserEntity currentUser = getCurrentUser();
+        Optional<TransactionEntity> entityOptional = transactionRepository.findByIdAndUser(id, currentUser);
+        
         if (entityOptional.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
@@ -52,9 +73,12 @@ public class TransactionServiceImpl implements TransactionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
+        UserEntity currentUser = getCurrentUser();
+        
         // Convert DTO to entity, ensure ID is null for new entities, save, and convert back to DTO
         TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
         entity.setId(null); // Ensure ID is null so Hibernate can auto-generate it
+        entity.setUser(currentUser); // Set the current user
         
         // Set current time if dateTime is not provided
         if (entity.getDateTime() == null) {
@@ -67,7 +91,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionDto updateTransaction(UUID id, TransactionDto transactionDto) {
-        if (!transactionRepository.existsById(id)) {
+        UserEntity currentUser = getCurrentUser();
+        
+        Optional<TransactionEntity> existingEntityOptional = transactionRepository.findByIdAndUser(id, currentUser);
+        if (existingEntityOptional.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
 
@@ -80,15 +107,15 @@ public class TransactionServiceImpl implements TransactionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
-        // Get the existing entity to preserve dateTime if not provided
-        TransactionEntity existingEntity = transactionRepository.findById(id).orElse(null);
+        TransactionEntity existingEntity = existingEntityOptional.get();
         
         // Convert DTO to entity, ensure the ID matches, save, and convert back to DTO
         TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
         entity.setId(id);
+        entity.setUser(currentUser); // Ensure user is set
         
         // Preserve original dateTime if not provided in update
-        if (entity.getDateTime() == null && existingEntity != null) {
+        if (entity.getDateTime() == null) {
             entity.setDateTime(existingEntity.getDateTime());
         }
         
@@ -98,9 +125,13 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public void deleteTransaction(UUID id) {
-        if (!transactionRepository.existsById(id)) {
+        UserEntity currentUser = getCurrentUser();
+        
+        Optional<TransactionEntity> entityOptional = transactionRepository.findByIdAndUser(id, currentUser);
+        if (entityOptional.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " + id);
         }
+        
         transactionRepository.deleteById(id);
     }
 }

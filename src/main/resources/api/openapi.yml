@@ -1,9 +1,13 @@
 openapi: 3.0.3
 info:
   title: Finance Tracker API
-  description: API for tracking personal finances
+  description: API for tracking personal finances with JWT authentication
   version: 1.0.0
 tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: User
+    description: User profile operations
   - name: Transactions
     description: Operations about financial transactions
 servers:
@@ -11,12 +15,80 @@ servers:
     description: Local development server
 
 paths:
+  # Authentication endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      operationId: registerUser
+      security: []  # Override global security - no auth required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Registration failed
+          
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      operationId: loginUser
+      security: []  # Override global security - no auth required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          
+  # User endpoints
+  /user/profile:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+
   /transactions:
     get:
       tags:
         - Transactions
       summary: Get all transactions
       operationId: getAllTransactions
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: List of transactions retrieved successfully
@@ -26,6 +98,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized
         '500':
           description: Internal server error
     
@@ -34,6 +108,8 @@ paths:
         - Transactions
       summary: Create a new transaction
       operationId: createTransaction
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -49,6 +125,8 @@ paths:
                 $ref: '#/components/schemas/Transaction'
         '400':
           description: Invalid input
+        '401':
+          description: Unauthorized
         '500':
           description: Internal server error
 
@@ -58,6 +136,8 @@ paths:
         - Transactions
       summary: Get transaction by ID
       operationId: getTransactionById
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -72,6 +152,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized
         '404':
           description: Transaction not found
         '500':
@@ -82,6 +164,8 @@ paths:
         - Transactions
       summary: Update transaction
       operationId: updateTransaction
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -102,6 +186,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized
         '404':
           description: Transaction not found
         '500':
@@ -112,6 +198,8 @@ paths:
         - Transactions
       summary: Delete transaction
       operationId: deleteTransaction
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -122,6 +210,8 @@ paths:
       responses:
         '204':
           description: Transaction deleted successfully
+        '401':
+          description: Unauthorized
         '404':
           description: Transaction not found
         '500':
@@ -157,3 +247,84 @@ components:
           type: string
           format: date-time
           description: Transaction date and time
+
+    # Authentication DTOs
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          description: Unique username
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          description: User password
+          
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username
+        password:
+          type: string
+          description: User password
+          
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        type:
+          type: string
+          default: "Bearer"
+          description: Token type
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+          
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          description: User role
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+# Apply security to all transaction endpoints
+security:
+  - bearerAuth: []

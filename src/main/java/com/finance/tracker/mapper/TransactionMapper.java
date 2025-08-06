@@ -42,7 +42,9 @@ public interface TransactionMapper {
     /**
      * Maps DTO to Entity
      * Direct mapping since both use LocalDateTime
+     * User field is ignored as it's handled in the service layer
      */
+    @Mapping(target = "user", ignore = true)
     TransactionEntity dtoToEntity(TransactionDto dto);
     
     /**
@@ -67,9 +69,10 @@ public interface TransactionMapper {
     
     /**
      * Updates an existing entity with non-null values from DTO
-     * Ignores ID to prevent overwrites
+     * Ignores ID and user to prevent overwrites
      */
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromDto(TransactionDto dto, @MappingTarget TransactionEntity entity);
     

@@ -37,4 +37,8 @@ public class TransactionEntity {
     @Builder.Default
     @Column(name = "transaction_date_time")
     private LocalDateTime dateTime = LocalDateTime.now();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 }
