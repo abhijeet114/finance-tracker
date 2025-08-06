@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,8 +52,15 @@ public class TransactionServiceImpl implements TransactionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
-        // Convert DTO to entity, save (UUID is auto-generated), and convert back to DTO
+        // Convert DTO to entity, ensure ID is null for new entities, save, and convert back to DTO
         TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
+        entity.setId(null); // Ensure ID is null so Hibernate can auto-generate it
+        
+        // Set current time if dateTime is not provided
+        if (entity.getDateTime() == null) {
+            entity.setDateTime(LocalDateTime.now());
+        }
+        
         TransactionEntity savedEntity = transactionRepository.save(entity);
         return transactionMapper.entityToDto(savedEntity);
     }
@@ -72,9 +80,18 @@ public class TransactionServiceImpl implements TransactionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount and type are required fields");
         }
 
+        // Get the existing entity to preserve dateTime if not provided
+        TransactionEntity existingEntity = transactionRepository.findById(id).orElse(null);
+        
         // Convert DTO to entity, ensure the ID matches, save, and convert back to DTO
         TransactionEntity entity = transactionMapper.dtoToEntity(transactionDto);
         entity.setId(id);
+        
+        // Preserve original dateTime if not provided in update
+        if (entity.getDateTime() == null && existingEntity != null) {
+            entity.setDateTime(existingEntity.getDateTime());
+        }
+        
         TransactionEntity savedEntity = transactionRepository.save(entity);
         return transactionMapper.entityToDto(savedEntity);
     }
