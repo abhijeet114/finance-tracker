@@ -10,9 +10,11 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Simple mapper for converting between OpenAPI models, DTOs, and entities
+ * Simple, clean mapper for converting between OpenAPI models, DTOs, and entities
+ * Focuses only on mapping responsibilities
  */
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface TransactionMapper {
@@ -20,88 +22,68 @@ public interface TransactionMapper {
     TransactionMapper INSTANCE = Mappers.getMapper(TransactionMapper.class);
     
     // ========================================
-    // OpenAPI Model ↔ DTO conversions
+    // Core Mapping Methods
     // ========================================
     
     /**
      * Maps OpenAPI Transaction model to DTO
+     * Handles datetime conversion from OffsetDateTime to LocalDateTime
      */
-    @Mapping(source = "dateTime", target = "dateTime")
-    @Mapping(source = "amount", target = "amount")
-    @Mapping(source = "description", target = "description")
-    @Mapping(source = "type", target = "type")
+    @Mapping(source = "dateTime", target = "dateTime", qualifiedByName = "offsetToLocal")
     TransactionDto apiModelToDto(Transaction apiModel);
     
     /**
      * Maps DTO to OpenAPI Transaction model
+     * Handles datetime conversion from LocalDateTime to OffsetDateTime
      */
-    @Mapping(source = "dateTime", target = "dateTime")
-    @Mapping(source = "amount", target = "amount")
-    @Mapping(source = "description", target = "description")
-    @Mapping(source = "type", target = "type")
+    @Mapping(source = "dateTime", target = "dateTime", qualifiedByName = "localToOffset")
     Transaction dtoToApiModel(TransactionDto dto);
     
     /**
-     * Bulk conversion from API models to DTOs
-     */
-    List<TransactionDto> apiModelsToDtos(List<Transaction> apiModels);
-    
-    /**
-     * Bulk conversion from DTOs to API models
-     */
-    List<Transaction> dtosToApiModels(List<TransactionDto> dtos);
-    
-    // ========================================
-    // DTO ↔ Entity conversions
-    // ========================================
-    
-    /**
      * Maps DTO to Entity
+     * Direct mapping since both use LocalDateTime
      */
-    @Mapping(source = "id", target = "id")
-    @Mapping(source = "dateTime", target = "dateTime")
-    @Mapping(source = "amount", target = "amount")
-    @Mapping(source = "description", target = "description")
-    @Mapping(source = "type", target = "type")
     TransactionEntity dtoToEntity(TransactionDto dto);
     
     /**
      * Maps Entity to DTO
+     * Direct mapping since both use LocalDateTime
      */
-    @Mapping(source = "id", target = "id")
-    @Mapping(source = "dateTime", target = "dateTime")
-    @Mapping(source = "amount", target = "amount")
-    @Mapping(source = "description", target = "description")
-    @Mapping(source = "type", target = "type")
     TransactionDto entityToDto(TransactionEntity entity);
     
-    /**
-     * Bulk conversion from DTOs to Entities
-     */
+    // ========================================
+    // Bulk Conversions
+    // ========================================
+    
+    List<TransactionDto> apiModelsToDtos(List<Transaction> apiModels);
+    List<Transaction> dtosToApiModels(List<TransactionDto> dtos);
     List<TransactionEntity> dtosToEntities(List<TransactionDto> dtos);
-    
-    /**
-     * Bulk conversion from Entities to DTOs
-     */
     List<TransactionDto> entitiesToDtos(List<TransactionEntity> entities);
+    Set<TransactionEntity> dtosToSetOfEntities(Set<TransactionDto> dtos);
     
     // ========================================
-    // DateTime conversion methods
+    // Update Methods
     // ========================================
     
     /**
-     * Converts OffsetDateTime to LocalDateTime
-     * Used when mapping from OpenAPI model to DTO/Entity
+     * Updates an existing entity with non-null values from DTO
+     * Ignores ID to prevent overwrites
      */
-    default LocalDateTime map(OffsetDateTime offsetDateTime) {
-        return offsetDateTime != null ? offsetDateTime.toLocalDateTime() : null;
+    @Mapping(target = "id", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromDto(TransactionDto dto, @MappingTarget TransactionEntity entity);
+    
+    // ========================================
+    // DateTime Conversion Helpers
+    // ========================================
+    
+    @Named("localToOffset")
+    default OffsetDateTime mapLocalToOffset(LocalDateTime localDateTime) {
+        return localDateTime != null ? localDateTime.atOffset(ZoneOffset.UTC) : null;
     }
     
-    /**
-     * Converts LocalDateTime to OffsetDateTime
-     * Used when mapping from DTO/Entity to OpenAPI model
-     */
-    default OffsetDateTime map(LocalDateTime localDateTime) {
-        return localDateTime != null ? localDateTime.atOffset(ZoneOffset.UTC) : null;
+    @Named("offsetToLocal")
+    default LocalDateTime mapOffsetToLocal(OffsetDateTime offsetDateTime) {
+        return offsetDateTime != null ? offsetDateTime.toLocalDateTime() : null;
     }
 }

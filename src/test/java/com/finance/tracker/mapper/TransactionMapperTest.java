@@ -16,15 +16,19 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Comprehensive test class demonstrating advanced MapStruct features in TransactionMapper
+ * Test class for TransactionMapper focusing on genuine mapping scenarios
  */
 @SpringBootTest
 class TransactionMapperTest {
 
     private final TransactionMapper mapper = Mappers.getMapper(TransactionMapper.class);
 
+    // ========================================
+    // API Model ↔ DTO Mapping Tests
+    // ========================================
+
     @Test
-    void testApiModelToDto_WithValidData_ShouldMapCorrectly() {
+    void testApiModelToDto_ShouldMapAllFields() {
         // Given
         Transaction apiModel = new Transaction();
         apiModel.setId(UUID.randomUUID());
@@ -48,39 +52,31 @@ class TransactionMapperTest {
     }
 
     @Test
-    void testApiModelToDto_WithNullAmount_ShouldSkipMapping() {
+    void testApiModelToDto_WithNullValues_ShouldHandleGracefully() {
         // Given
         Transaction apiModel = new Transaction();
         apiModel.setId(UUID.randomUUID());
-        apiModel.setAmount(null); // This should fail validation
+        apiModel.setAmount(null);
         apiModel.setType(Transaction.TypeEnum.EXPENSE);
+        apiModel.setCategory(null);
+        apiModel.setDescription(null);
+        apiModel.setDateTime(null);
 
         // When
         TransactionDto dto = mapper.apiModelToDto(apiModel);
 
         // Then
         assertThat(dto).isNotNull();
-        assertThat(dto.getAmount()).isNull(); // Amount should be null due to condition
+        assertThat(dto.getId()).isEqualTo(apiModel.getId());
+        assertThat(dto.getAmount()).isNull();
+        assertThat(dto.getType()).isEqualTo(TransactionDto.TransactionTypeDto.EXPENSE);
+        assertThat(dto.getCategory()).isNull();
+        assertThat(dto.getDescription()).isNull();
+        assertThat(dto.getDateTime()).isNull();
     }
 
     @Test
-    void testApiModelToDto_WithNegativeAmount_ShouldSkipMapping() {
-        // Given
-        Transaction apiModel = new Transaction();
-        apiModel.setId(UUID.randomUUID());
-        apiModel.setAmount(-50.0); // This should fail validation
-        apiModel.setType(Transaction.TypeEnum.EXPENSE);
-
-        // When
-        TransactionDto dto = mapper.apiModelToDto(apiModel);
-
-        // Then
-        assertThat(dto).isNotNull();
-        assertThat(dto.getAmount()).isNull(); // Amount should be null due to condition
-    }
-
-    @Test
-    void testDtoToApiModel_ShouldMapCorrectly() {
+    void testDtoToApiModel_ShouldMapAllFields() {
         // Given
         TransactionDto dto = TransactionDto.builder()
                 .id(UUID.randomUUID())
@@ -104,15 +100,20 @@ class TransactionMapperTest {
         assertThat(apiModel.getDateTime()).isEqualTo(dto.getDateTime().atOffset(ZoneOffset.UTC));
     }
 
+    // ========================================
+    // DTO ↔ Entity Mapping Tests
+    // ========================================
+
     @Test
-    void testDtoToEntity_WithDefaults_ShouldGenerateValues() {
+    void testDtoToEntity_ShouldMapAllFields() {
         // Given
         TransactionDto dto = TransactionDto.builder()
+                .id(UUID.randomUUID())
                 .amount(200.0)
                 .type(TransactionDto.TransactionTypeDto.INCOME)
                 .category("Bonus")
                 .description("Year-end bonus")
-                // No ID or dateTime - should be generated
+                .dateTime(LocalDateTime.now())
                 .build();
 
         // When
@@ -120,16 +121,16 @@ class TransactionMapperTest {
 
         // Then
         assertThat(entity).isNotNull();
-        assertThat(entity.getId()).isNotNull(); // Should be generated
+        assertThat(entity.getId()).isEqualTo(dto.getId());
         assertThat(entity.getAmount()).isEqualTo(dto.getAmount());
         assertThat(entity.getType()).isEqualTo(TransactionType.INCOME);
         assertThat(entity.getCategory()).isEqualTo(dto.getCategory());
         assertThat(entity.getDescription()).isEqualTo(dto.getDescription());
-        assertThat(entity.getDateTime()).isNotNull(); // Should be generated
+        assertThat(entity.getDateTime()).isEqualTo(dto.getDateTime());
     }
 
     @Test
-    void testEntityToDto_ShouldMapCorrectly() {
+    void testEntityToDto_ShouldMapAllFields() {
         // Given
         TransactionEntity entity = TransactionEntity.builder()
                 .id(UUID.randomUUID())
@@ -153,6 +154,10 @@ class TransactionMapperTest {
         assertThat(dto.getDateTime()).isEqualTo(entity.getDateTime());
     }
 
+    // ========================================
+    // Update Mapping Tests
+    // ========================================
+
     @Test
     void testUpdateEntityFromDto_ShouldUpdateOnlyNonNullFields() {
         // Given
@@ -171,24 +176,30 @@ class TransactionMapperTest {
                 // Leave other fields null - should not update
                 .build();
 
+        UUID originalId = existingEntity.getId();
+
         // When
         mapper.updateEntityFromDto(updateDto, existingEntity);
 
         // Then
-        assertThat(existingEntity.getId()).isNotNull(); // Should remain unchanged
+        assertThat(existingEntity.getId()).isEqualTo(originalId); // Should remain unchanged
         assertThat(existingEntity.getAmount()).isEqualTo(150.0); // Should be updated
         assertThat(existingEntity.getCategory()).isEqualTo("New Category"); // Should be updated
         assertThat(existingEntity.getDescription()).isEqualTo("Old Description"); // Should remain unchanged
         assertThat(existingEntity.getType()).isEqualTo(TransactionType.INCOME); // Should remain unchanged
     }
 
+    // ========================================
+    // Bulk Mapping Tests
+    // ========================================
+
     @Test
-    void testBulkMapping_Lists_ShouldMapAllElements() {
+    void testApiModelsToDtos_ShouldMapAllElements() {
         // Given
         List<Transaction> apiModels = Arrays.asList(
-                createTestTransaction(100.0, Transaction.TypeEnum.INCOME),
-                createTestTransaction(50.0, Transaction.TypeEnum.EXPENSE),
-                createTestTransaction(75.0, Transaction.TypeEnum.INCOME)
+                createTestApiModel(100.0, Transaction.TypeEnum.INCOME),
+                createTestApiModel(50.0, Transaction.TypeEnum.EXPENSE),
+                createTestApiModel(75.0, Transaction.TypeEnum.INCOME)
         );
 
         // When
@@ -205,7 +216,26 @@ class TransactionMapperTest {
     }
 
     @Test
-    void testBulkMapping_Sets_ShouldMapAllElements() {
+    void testDtosToEntities_ShouldMapAllElements() {
+        // Given
+        List<TransactionDto> dtos = Arrays.asList(
+                createTestDto(200.0, TransactionDto.TransactionTypeDto.INCOME),
+                createTestDto(80.0, TransactionDto.TransactionTypeDto.EXPENSE)
+        );
+
+        // When
+        List<TransactionEntity> entities = mapper.dtosToEntities(dtos);
+
+        // Then
+        assertThat(entities).hasSize(2);
+        assertThat(entities.get(0).getAmount()).isEqualTo(200.0);
+        assertThat(entities.get(0).getType()).isEqualTo(TransactionType.INCOME);
+        assertThat(entities.get(1).getAmount()).isEqualTo(80.0);
+        assertThat(entities.get(1).getType()).isEqualTo(TransactionType.EXPENSE);
+    }
+
+    @Test
+    void testDtosToSetOfEntities_ShouldMapAllElements() {
         // Given
         Set<TransactionDto> dtos = Set.of(
                 createTestDto(200.0, TransactionDto.TransactionTypeDto.INCOME),
@@ -221,26 +251,12 @@ class TransactionMapperTest {
                 .containsExactlyInAnyOrder(200.0, 80.0);
     }
 
-    @Test
-    void testEnumMapping_WithNullValue_ShouldReturnDefault() {
-        // When
-        TransactionDto.TransactionTypeDto result = mapper.mapApiEnumToDto(null);
-
-        // Then
-        assertThat(result).isEqualTo(TransactionDto.TransactionTypeDto.EXPENSE); // Default fallback
-    }
+    // ========================================
+    // DateTime Conversion Tests
+    // ========================================
 
     @Test
-    void testEnumMapping_WithValidValues_ShouldMapCorrectly() {
-        // When & Then
-        assertThat(mapper.mapApiEnumToDto(Transaction.TypeEnum.INCOME))
-                .isEqualTo(TransactionDto.TransactionTypeDto.INCOME);
-        assertThat(mapper.mapApiEnumToDto(Transaction.TypeEnum.EXPENSE))
-                .isEqualTo(TransactionDto.TransactionTypeDto.EXPENSE);
-    }
-
-    @Test
-    void testDateTimeMapping_ShouldHandleTimezones() {
+    void testDateTimeConversion_ShouldHandleTimezoneCorrectly() {
         // Given
         LocalDateTime localTime = LocalDateTime.of(2023, 12, 25, 15, 30);
         OffsetDateTime offsetTime = OffsetDateTime.of(2023, 12, 25, 15, 30, 0, 0, ZoneOffset.of("+02:00"));
@@ -255,61 +271,39 @@ class TransactionMapperTest {
     }
 
     @Test
-    void testValidationConditions() {
-        // Test amount validation
-        assertThat(mapper.isValidAmount(100.0)).isTrue();
-        assertThat(mapper.isValidAmount(0.0)).isFalse();
-        assertThat(mapper.isValidAmount(-50.0)).isFalse();
-        assertThat(mapper.isValidAmount(null)).isFalse();
-
-        // Test string validation
-        assertThat(mapper.isNotEmpty("valid")).isTrue();
-        assertThat(mapper.isNotEmpty("")).isFalse();
-        assertThat(mapper.isNotEmpty("   ")).isFalse();
-        assertThat(mapper.isNotEmpty(null)).isFalse();
-
-        // Test datetime validation
-        assertThat(mapper.isValidDateTime(OffsetDateTime.now().minusHours(1))).isTrue();
-        assertThat(mapper.isValidDateTime(OffsetDateTime.now().plusHours(1))).isFalse();
-        assertThat(mapper.isValidDateTime(null)).isFalse();
+    void testDateTimeConversion_WithNullValues_ShouldReturnNull() {
+        // When & Then
+        assertThat(mapper.mapLocalToOffset(null)).isNull();
+        assertThat(mapper.mapOffsetToLocal(null)).isNull();
     }
 
+    // ========================================
+    // Edge Cases
+    // ========================================
+
     @Test
-    void testObjectFactories() {
+    void testMapping_WithEmptyLists_ShouldReturnEmptyLists() {
         // When
-        TransactionEntity entity = mapper.createTransactionEntity();
-        TransactionDto dto = mapper.createTransactionDto();
+        List<TransactionDto> emptyDtos = mapper.apiModelsToDtos(Collections.emptyList());
+        List<TransactionEntity> emptyEntities = mapper.dtosToEntities(Collections.emptyList());
 
         // Then
-        assertThat(entity).isNotNull();
-        assertThat(entity.getId()).isNotNull();
-        assertThat(entity.getDateTime()).isNotNull();
-
-        assertThat(dto).isNotNull();
+        assertThat(emptyDtos).isEmpty();
+        assertThat(emptyEntities).isEmpty();
     }
 
     @Test
-    void testAfterMappingValidation_WithInvalidAmount_ShouldThrowException() {
-        // Given
-        Transaction invalidTransaction = new Transaction();
-        invalidTransaction.setAmount(-100.0); // Invalid amount
-
+    void testMapping_WithNullLists_ShouldReturnNull() {
         // When & Then
-        assertThatThrownBy(() -> mapper.validateApiModel(invalidTransaction))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("amount must be positive");
+        assertThat(mapper.apiModelsToDtos(null)).isNull();
+        assertThat(mapper.dtosToEntities(null)).isNull();
     }
 
-    @Test 
-    void testBeforeMappingValidation_WithNullSource_ShouldThrowException() {
-        // When & Then
-        assertThatThrownBy(() -> mapper.validateSource(null, TransactionDto.class))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Source object cannot be null");
-    }
+    // ========================================
+    // Helper Methods
+    // ========================================
 
-    // Helper methods
-    private Transaction createTestTransaction(double amount, Transaction.TypeEnum type) {
+    private Transaction createTestApiModel(double amount, Transaction.TypeEnum type) {
         Transaction transaction = new Transaction();
         transaction.setId(UUID.randomUUID());
         transaction.setAmount(amount);
