@@ -29,6 +29,10 @@ docker-compose up --build
 # Start PostgreSQL database
 docker-compose up postgres -d
 
+docker-compose up -d postgres
+
+docker-compose down && docker-compose build finance-tracker-app && docker-compose up -d
+
 # Run the backend application
 cd backend
 ./mvnw spring-boot:run -Dspring.profiles.active=dev

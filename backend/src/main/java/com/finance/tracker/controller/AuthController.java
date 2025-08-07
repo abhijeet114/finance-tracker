@@ -22,53 +22,45 @@ public class AuthController implements AuthenticationApi {
     @Override
     public ResponseEntity<com.finance.tracker.model.AuthResponse> loginUser(
             com.finance.tracker.model.LoginRequest loginRequest) {
-        try {
-            // Convert from generated model to DTO
-            LoginRequest dto = LoginRequest.builder()
-                    .username(loginRequest.getUsername())
-                    .password(loginRequest.getPassword())
-                    .build();
-            
-            AuthResponse response = authService.login(dto);
-            
-            // Convert response back to generated model
-            com.finance.tracker.model.AuthResponse modelResponse = 
-                    new com.finance.tracker.model.AuthResponse()
-                            .token(response.getToken())
-                            .type(response.getType())
-                            .username(response.getUsername())
-                            .email(response.getEmail());
-            
-            return ResponseEntity.ok(modelResponse);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Convert from generated model to DTO
+        LoginRequest dto = LoginRequest.builder()
+                .username(loginRequest.getUsername())
+                .password(loginRequest.getPassword())
+                .build();
+        
+        AuthResponse response = authService.login(dto);
+        
+        // Convert response back to generated model
+        com.finance.tracker.model.AuthResponse modelResponse = 
+                new com.finance.tracker.model.AuthResponse()
+                        .token(response.getToken())
+                        .type(response.getType())
+                        .username(response.getUsername())
+                        .email(response.getEmail());
+        
+        return ResponseEntity.ok(modelResponse);
     }
 
     @Override
     public ResponseEntity<com.finance.tracker.model.AuthResponse> registerUser(
             com.finance.tracker.model.RegisterRequest registerRequest) {
-        try {
-            // Convert from generated model to DTO
-            RegisterRequest dto = RegisterRequest.builder()
-                    .username(registerRequest.getUsername())
-                    .email(registerRequest.getEmail())
-                    .password(registerRequest.getPassword())
-                    .build();
-            
-            AuthResponse response = authService.register(dto);
-            
-            // Convert response back to generated model
-            com.finance.tracker.model.AuthResponse modelResponse = 
-                    new com.finance.tracker.model.AuthResponse()
-                            .token(response.getToken())
-                            .type(response.getType())
-                            .username(response.getUsername())
-                            .email(response.getEmail());
-            
-            return ResponseEntity.ok(modelResponse);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Convert from generated model to DTO
+        RegisterRequest dto = RegisterRequest.builder()
+                .username(registerRequest.getUsername())
+                .email(registerRequest.getEmail())
+                .password(registerRequest.getPassword())
+                .build();
+        
+        AuthResponse response = authService.register(dto);
+        
+        // Convert response back to generated model
+        com.finance.tracker.model.AuthResponse modelResponse = 
+                new com.finance.tracker.model.AuthResponse()
+                        .token(response.getToken())
+                        .type(response.getType())
+                        .username(response.getUsername())
+                        .email(response.getEmail());
+        
+        return ResponseEntity.ok(modelResponse);
     }
 }

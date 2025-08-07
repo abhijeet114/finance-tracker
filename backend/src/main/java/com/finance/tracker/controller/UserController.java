@@ -21,6 +21,8 @@ public class UserController implements UserApi {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated()) {
+            // This should actually be handled by the security filter now
+            // but keeping as fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
