@@ -6,6 +6,8 @@ import com.finance.tracker.entity.TransactionType;
 import com.finance.tracker.entity.UserEntity;
 import com.finance.tracker.entity.Role;
 import com.finance.tracker.mapper.TransactionMapper;
+import com.finance.tracker.model.TransactionRequest;
+import com.finance.tracker.model.TransactionResponse;
 import com.finance.tracker.repository.TransactionRepository;
 import com.finance.tracker.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +58,8 @@ class TransactionServiceTest {
 
     private TransactionDto testDto;
     private TransactionEntity testEntity;
+    private TransactionRequest testRequest;
+    private TransactionResponse testResponse;
     private UserEntity testUser;
     private UUID testId;
     private UUID userId;
@@ -91,6 +96,19 @@ class TransactionServiceTest {
                 .dateTime(LocalDateTime.now())
                 .user(testUser)
                 .build();
+
+        testRequest = new TransactionRequest()
+                .amount(100.0)
+                .type(TransactionRequest.TypeEnum.INCOME)
+                .category("Test Category")
+                .description("Test Description");
+
+        testResponse = new TransactionResponse()
+                .id(testId)
+                .amount(100.0)
+                .type(TransactionResponse.TypeEnum.INCOME)
+                .category("Test Category")
+                .description("Test Description");
                 
         // Mock security context
         SecurityContextHolder.setContext(securityContext);
@@ -102,19 +120,23 @@ class TransactionServiceTest {
     @Test
     void testCreateTransaction_ShouldReturnSavedTransaction() {
         // Given
+        when(mapper.apiModelToDto(any(TransactionRequest.class))).thenReturn(testDto);
         when(mapper.dtoToEntity(any(TransactionDto.class))).thenReturn(testEntity);
         when(repository.save(any(TransactionEntity.class))).thenReturn(testEntity);
         when(mapper.entityToDto(any(TransactionEntity.class))).thenReturn(testDto);
+        when(mapper.dtoToApiModel(any(TransactionDto.class))).thenReturn(testResponse);
 
         // When
-        TransactionDto result = transactionService.createTransaction(testDto);
+        TransactionResponse result = transactionService.createTransaction(testRequest);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(testId);
+        verify(mapper).apiModelToDto(testRequest);
         verify(mapper).dtoToEntity(testDto);
         verify(repository).save(testEntity);
         verify(mapper).entityToDto(testEntity);
+        verify(mapper).dtoToApiModel(testDto);
     }
 
     @Test
@@ -122,12 +144,14 @@ class TransactionServiceTest {
         // Given
         List<TransactionEntity> entities = Arrays.asList(testEntity);
         List<TransactionDto> dtos = Arrays.asList(testDto);
+        List<TransactionResponse> responses = Arrays.asList(testResponse);
         
         when(repository.findByUser(testUser)).thenReturn(entities);
         when(mapper.entitiesToDtos(entities)).thenReturn(dtos);
+        when(mapper.dtosToApiModels(dtos)).thenReturn(responses);
 
         // When
-        List<TransactionDto> result = transactionService.getAllTransactions();
+        List<TransactionResponse> result = transactionService.getAllTransactions();
 
         // Then
         assertThat(result).isNotNull();
@@ -135,6 +159,7 @@ class TransactionServiceTest {
         assertThat(result.get(0).getId()).isEqualTo(testId);
         verify(repository).findByUser(testUser);
         verify(mapper).entitiesToDtos(entities);
+        verify(mapper).dtosToApiModels(dtos);
     }
 
     @Test
@@ -142,15 +167,17 @@ class TransactionServiceTest {
         // Given
         when(repository.findByIdAndUser(testId, testUser)).thenReturn(Optional.of(testEntity));
         when(mapper.entityToDto(testEntity)).thenReturn(testDto);
+        when(mapper.dtoToApiModel(testDto)).thenReturn(testResponse);
 
         // When
-        TransactionDto result = transactionService.getTransactionById(testId);
+        TransactionResponse result = transactionService.getTransactionById(testId);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(testId);
         verify(repository).findByIdAndUser(testId, testUser);
         verify(mapper).entityToDto(testEntity);
+        verify(mapper).dtoToApiModel(testDto);
     }
 
     @Test

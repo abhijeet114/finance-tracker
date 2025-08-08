@@ -2,7 +2,8 @@ package com.finance.tracker.mapper;
 
 import com.finance.tracker.dto.TransactionDto;
 import com.finance.tracker.entity.TransactionEntity;
-import com.finance.tracker.model.Transaction;
+import com.finance.tracker.model.TransactionRequest;
+import com.finance.tracker.model.TransactionResponse;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -26,18 +27,18 @@ public interface TransactionMapper {
     // ========================================
     
     /**
-     * Maps OpenAPI Transaction model to DTO
+     * Maps OpenAPI TransactionRequest model to DTO
      * Handles datetime conversion from OffsetDateTime to LocalDateTime
      */
     @Mapping(source = "dateTime", target = "dateTime", qualifiedByName = "offsetToLocal")
-    TransactionDto apiModelToDto(Transaction apiModel);
+    TransactionDto apiModelToDto(TransactionRequest apiModel);
     
     /**
-     * Maps DTO to OpenAPI Transaction model
+     * Maps DTO to OpenAPI TransactionResponse model
      * Handles datetime conversion from LocalDateTime to OffsetDateTime
      */
     @Mapping(source = "dateTime", target = "dateTime", qualifiedByName = "localToOffset")
-    Transaction dtoToApiModel(TransactionDto dto);
+    TransactionResponse dtoToApiModel(TransactionDto dto);
     
     /**
      * Maps DTO to Entity
@@ -57,8 +58,8 @@ public interface TransactionMapper {
     // Bulk Conversions
     // ========================================
     
-    List<TransactionDto> apiModelsToDtos(List<Transaction> apiModels);
-    List<Transaction> dtosToApiModels(List<TransactionDto> dtos);
+    List<TransactionDto> apiModelsToDtos(List<TransactionRequest> apiModels);
+    List<TransactionResponse> dtosToApiModels(List<TransactionDto> dtos);
     List<TransactionEntity> dtosToEntities(List<TransactionDto> dtos);
     List<TransactionDto> entitiesToDtos(List<TransactionEntity> entities);
     Set<TransactionEntity> dtosToSetOfEntities(Set<TransactionDto> dtos);

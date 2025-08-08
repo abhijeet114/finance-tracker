@@ -4,7 +4,8 @@ import com.finance.tracker.dto.TransactionDto;
 import com.finance.tracker.entity.TransactionEntity;
 import com.finance.tracker.entity.TransactionType;
 import com.finance.tracker.mapper.TransactionMapper;
-import com.finance.tracker.model.Transaction;
+import com.finance.tracker.model.TransactionRequest;
+import com.finance.tracker.model.TransactionResponse;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDateTime;
@@ -45,11 +46,11 @@ public class MapperTest {
         // Test OpenAPI Model ↔ DTO conversion
         System.out.println("\n=== Testing OpenAPI Model ↔ DTO Conversion ===");
         
-        // Create an OpenAPI model
-        Transaction apiModel = new Transaction()
+        // Create an OpenAPI request model
+        TransactionRequest apiModel = new TransactionRequest()
                 .id(UUID.randomUUID())
                 .amount(200.75)
-                .type(Transaction.TypeEnum.EXPENSE)
+                .type(TransactionRequest.TypeEnum.EXPENSE)
                 .category("Food")
                 .description("Grocery shopping");
         
@@ -57,8 +58,8 @@ public class MapperTest {
         TransactionDto dtoFromApi = mapper.apiModelToDto(apiModel);
         System.out.println("API Model to DTO: " + dtoFromApi.getId() + ", " + dtoFromApi.getAmount() + ", " + dtoFromApi.getType());
         
-        // Convert DTO back to OpenAPI model
-        Transaction apiModelFromDto = mapper.dtoToApiModel(dtoFromApi);
+        // Convert DTO back to OpenAPI response model
+        TransactionResponse apiModelFromDto = mapper.dtoToApiModel(dtoFromApi);
         System.out.println("DTO to API Model: " + apiModelFromDto.getId() + ", " + 
                           apiModelFromDto.getAmount() + ", " + apiModelFromDto.getType());
         

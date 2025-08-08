@@ -1,6 +1,6 @@
 package com.finance.tracker.config;
 
-import com.finance.tracker.dto.error.ErrorResponse;
+import com.finance.tracker.model.ModelApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,62 +11,73 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.OffsetDateTime;
+
 /**
  * Global exception handler for all controllers
+ * Uses the standardized ModelApiResponse format for all error responses
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+    public ResponseEntity<ModelApiResponse> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.of(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Authentication failed: " + ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message("Authentication failed: " + ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+    public ResponseEntity<ModelApiResponse> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.of(
-                HttpStatus.FORBIDDEN.value(),
-                "Forbidden",
-                "Access denied: " + ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("Forbidden")
+                .message("Access denied: " + ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ErrorResponse> handleResponseStatusException(
+    public ResponseEntity<ModelApiResponse> handleResponseStatusException(
             ResponseStatusException ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.of(
-                ex.getStatusCode().value(),
-                ex.getStatusCode().toString(),
-                ex.getReason() != null ? ex.getReason() : "An error occurred",
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(ex.getStatusCode().value())
+                .error(ex.getStatusCode().toString())
+                .message(ex.getReason() != null ? ex.getReason() : "An error occurred")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
+    public ResponseEntity<ModelApiResponse> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
+    public ResponseEntity<ModelApiResponse> handleValidationException(
             MethodArgumentNotValidException ex, WebRequest request) {
         String message = "Validation failed";
         if (ex.getBindingResult().hasFieldErrors()) {
@@ -77,24 +88,28 @@ public class GlobalExceptionHandler {
                     .orElse("Validation failed");
         }
         
-        ErrorResponse errorResponse = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                message,
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(message)
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
+    public ResponseEntity<ModelApiResponse> handleGenericException(
             Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.of(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred: " + ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
-        );
+        ModelApiResponse errorResponse = new ModelApiResponse()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("Internal Server Error")
+                .message("An unexpected error occurred: " + ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .body("")
+                .timestamp(OffsetDateTime.now());
+        
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }

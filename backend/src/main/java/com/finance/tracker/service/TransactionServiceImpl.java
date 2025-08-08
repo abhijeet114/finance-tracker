@@ -4,8 +4,9 @@ import com.finance.tracker.dto.TransactionDto;
 import com.finance.tracker.entity.TransactionEntity;
 import com.finance.tracker.entity.UserEntity;
 import com.finance.tracker.mapper.TransactionMapper;
+import com.finance.tracker.model.TransactionRequest;
+import com.finance.tracker.model.TransactionResponse;
 import com.finance.tracker.repository.TransactionRepository;
-import com.finance.tracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,15 +24,12 @@ public class TransactionServiceImpl implements TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
-    private final UserRepository userRepository;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository, 
-                                TransactionMapper transactionMapper, 
-                                UserRepository userRepository) {
+                                TransactionMapper transactionMapper) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
-        this.userRepository = userRepository;
     }
 
     private UserEntity getCurrentUser() {
@@ -44,15 +42,53 @@ public class TransactionServiceImpl implements TransactionService {
         return user;
     }
 
+    // OpenAPI model methods
     @Override
-    public List<TransactionDto> getAllTransactions() {
+    public List<TransactionResponse> getAllTransactions() {
+        List<TransactionDto> dtos = getAllTransactionDtos();
+        return transactionMapper.dtosToApiModels(dtos);
+    }
+
+    @Override
+    public TransactionResponse getTransactionById(UUID id) {
+        TransactionDto dto = getTransactionDtoById(id);
+        return transactionMapper.dtoToApiModel(dto);
+    }
+
+    @Override
+    public TransactionResponse createTransaction(TransactionRequest transactionRequest) {
+        // Convert OpenAPI model to DTO
+        TransactionDto dto = transactionMapper.apiModelToDto(transactionRequest);
+        
+        // Process through DTO layer
+        TransactionDto createdDto = createTransactionDto(dto);
+        
+        // Convert back to OpenAPI model
+        return transactionMapper.dtoToApiModel(createdDto);
+    }
+
+    @Override
+    public TransactionResponse updateTransaction(UUID id, TransactionRequest transactionRequest) {
+        // Convert OpenAPI model to DTO
+        TransactionDto dto = transactionMapper.apiModelToDto(transactionRequest);
+        
+        // Process through DTO layer
+        TransactionDto updatedDto = updateTransactionDto(id, dto);
+        
+        // Convert back to OpenAPI model
+        return transactionMapper.dtoToApiModel(updatedDto);
+    }
+
+    // DTO-based methods for internal business logic
+    @Override
+    public List<TransactionDto> getAllTransactionDtos() {
         UserEntity currentUser = getCurrentUser();
         List<TransactionEntity> entities = transactionRepository.findByUser(currentUser);
         return transactionMapper.entitiesToDtos(entities);
     }
 
     @Override
-    public TransactionDto getTransactionById(UUID id) {
+    public TransactionDto getTransactionDtoById(UUID id) {
         UserEntity currentUser = getCurrentUser();
         Optional<TransactionEntity> entityOptional = transactionRepository.findByIdAndUser(id, currentUser);
         
@@ -63,7 +99,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionDto createTransaction(TransactionDto transactionDto) {
+    public TransactionDto createTransactionDto(TransactionDto transactionDto) {
         if (transactionDto == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transaction cannot be null");
         }
@@ -90,7 +126,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionDto updateTransaction(UUID id, TransactionDto transactionDto) {
+    public TransactionDto updateTransactionDto(UUID id, TransactionDto transactionDto) {
         UserEntity currentUser = getCurrentUser();
         
         Optional<TransactionEntity> existingEntityOptional = transactionRepository.findByIdAndUser(id, currentUser);

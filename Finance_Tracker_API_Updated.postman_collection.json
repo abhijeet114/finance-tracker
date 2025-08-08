@@ -23,9 +23,10 @@
 									"",
 									"pm.test(\"Response has user data\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('id');",
-									"    pm.expect(jsonData).to.have.property('username');",
-									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('status', 201);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('username');",
+									"    pm.expect(jsonData.body).to.have.property('email');",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -78,10 +79,12 @@
 									"",
 									"pm.test(\"Response has JWT token\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData).to.have.property('status', 200);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('token');",
 									"    ",
 									"    // Store the token for use in other requests",
-									"    pm.collectionVariables.set('authToken', jsonData.token);",
+									"    pm.collectionVariables.set('authToken', jsonData.body.token);",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -138,8 +141,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response is an array\", function () {",
-									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"pm.test(\"Response is transaction list\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status', 200);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.be.an('array');",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -193,18 +199,20 @@
 									"",
 									"pm.test(\"Response has transaction data\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('id');",
-									"    pm.expect(jsonData).to.have.property('amount');",
-									"    pm.expect(jsonData).to.have.property('type');",
-									"    pm.expect(jsonData).to.have.property('category');",
+									"    pm.expect(jsonData).to.have.property('status', 201);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('id');",
+									"    pm.expect(jsonData.body).to.have.property('amount');",
+									"    pm.expect(jsonData.body).to.have.property('type');",
+									"    pm.expect(jsonData.body).to.have.property('category');",
 									"    ",
 									"    // Store transaction ID for other tests",
-									"    pm.collectionVariables.set('transactionId', jsonData.id);",
+									"    pm.collectionVariables.set('transactionId', jsonData.body.id);",
 									"});",
 									"",
 									"pm.test(\"Transaction amount matches\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.amount).to.eql(150.75);",
+									"    pm.expect(jsonData.body.amount).to.eql(150.75);",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -266,10 +274,12 @@
 									"",
 									"pm.test(\"Response has transaction data\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('id');",
-									"    pm.expect(jsonData).to.have.property('amount');",
-									"    pm.expect(jsonData).to.have.property('type');",
-									"    pm.expect(jsonData).to.have.property('category');",
+									"    pm.expect(jsonData).to.have.property('status', 200);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('id');",
+									"    pm.expect(jsonData.body).to.have.property('amount');",
+									"    pm.expect(jsonData.body).to.have.property('type');",
+									"    pm.expect(jsonData.body).to.have.property('category');",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -324,15 +334,17 @@
 									"",
 									"pm.test(\"Response has updated transaction data\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('id');",
-									"    pm.expect(jsonData).to.have.property('amount');",
-									"    pm.expect(jsonData).to.have.property('type');",
-									"    pm.expect(jsonData).to.have.property('category');",
+									"    pm.expect(jsonData).to.have.property('status', 200);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('id');",
+									"    pm.expect(jsonData.body).to.have.property('amount');",
+									"    pm.expect(jsonData.body).to.have.property('type');",
+									"    pm.expect(jsonData.body).to.have.property('category');",
 									"});",
 									"",
 									"pm.test(\"Updated amount matches\", function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.amount).to.eql(175.25);",
+									"    pm.expect(jsonData.body.amount).to.eql(175.25);",
 									"});",
 									"",
 									"pm.test(\"Content-Type is application/json\", function () {",
@@ -393,8 +405,11 @@
 									"    pm.response.to.have.status(204);",
 									"});",
 									"",
-									"pm.test(\"Response body is empty\", function () {",
-									"    pm.expect(pm.response.text()).to.be.empty;",
+									"pm.test(\"Response has success format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status', 204);",
+									"    pm.expect(jsonData).to.have.property('message', 'Transaction deleted successfully');",
+									"    pm.expect(jsonData).to.have.property('body', null);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -431,8 +446,129 @@
 			"description": "Transaction management endpoints - all operations require JWT authentication and operate on user-specific data."
 		},
 		{
-			"name": "Health Check",
+			"name": "User Profile",
 			"item": [
+				{
+					"name": "Get User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has user profile data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status', 200);",
+									"    pm.expect(jsonData).to.have.property('body');",
+									"    pm.expect(jsonData.body).to.have.property('id');",
+									"    pm.expect(jsonData.body).to.have.property('username');",
+									"    pm.expect(jsonData.body).to.have.property('email');",
+									"    pm.expect(jsonData.body).to.have.property('role');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"profile"
+							]
+						}
+					}
+				}
+			],
+			"description": "User profile endpoints - requires JWT authentication to retrieve user information."
+		},
+		{
+			"name": "Actuator",
+			"item": [
+				{
+					"name": "Actuator Root",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has actuator links\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('_links');",
+									"    pm.expect(jsonData._links).to.have.property('self');",
+									"    pm.expect(jsonData._links).to.have.property('health');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator"
+							]
+						}
+					}
+				},
 				{
 					"name": "Health Check",
 					"event": [
@@ -445,8 +581,12 @@
 									"});",
 									"",
 									"pm.test(\"Response indicates healthy status\", function () {",
-									"    const responseText = pm.response.text();",
-									"    pm.expect(responseText.toLowerCase()).to.include('healthy');",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status', 'UP');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -455,20 +595,354 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
-							"raw": "{{baseUrl}}/health",
+							"raw": "{{baseUrl}}/actuator/health",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"actuator",
 								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Application Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is valid JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/info",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						}
+					}
+				},
+				{
+					"name": "Health Check with Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has health information\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    // When authenticated, may show more details like database status",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Application Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has metrics data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('names');",
+									"    pm.expect(jsonData.names).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						}
+					}
+				},
+				{
+					"name": "Environment Properties",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has environment data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('propertySources');",
+									"    pm.expect(jsonData.propertySources).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/env",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"env"
+							]
+						}
+					}
+				},
+				{
+					"name": "Application Loggers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has loggers data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('loggers');",
+									"    pm.expect(jsonData.loggers).to.be.an('object');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/loggers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"loggers"
+							]
+						}
+					}
+				},
+				{
+					"name": "Spring Beans",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has beans data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('contexts');",
+									"    pm.expect(jsonData.contexts).to.be.an('object');",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/beans",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"beans"
 							]
 						}
 					}
 				}
 			],
-			"description": "Health check endpoint for monitoring application status - no authentication required."
+			"description": "Spring Boot Actuator endpoints for monitoring and management. Health endpoint is public, others require authentication."
 		}
 	],
 	"event": [
@@ -499,13 +973,34 @@
 					"// Global test script",
 					"console.log('Finance Tracker API Collection - Request completed with status:', pm.response.code);",
 					"",
-					"// Handle authentication errors",
+					"// Handle authentication errors - our API uses ResponseBuilder format",
 					"if (pm.response.code === 401) {",
 					"    console.error('Authentication failed. Please check your token or login again.');",
+					"    const jsonData = pm.response.json();",
+					"    if (jsonData && jsonData.message) {",
+					"        console.error('Error message:', jsonData.message);",
+					"    }",
 					"}",
 					"",
 					"if (pm.response.code === 403) {",
 					"    console.error('Access forbidden. You may not have permission to access this resource.');",
+					"    const jsonData = pm.response.json();",
+					"    if (jsonData && jsonData.message) {",
+					"        console.error('Error message:', jsonData.message);",
+					"    }",
+					"}",
+					"",
+					"// Validate ResponseBuilder format for successful responses",
+					"if (pm.response.code >= 200 && pm.response.code < 300) {",
+					"    const jsonData = pm.response.json();",
+					"    if (jsonData) {",
+					"        pm.test('Response follows ResponseBuilder format', function () {",
+					"            pm.expect(jsonData).to.have.property('status');",
+					"            pm.expect(jsonData).to.have.property('message');",
+					"            pm.expect(jsonData).to.have.property('path');",
+					"            pm.expect(jsonData).to.have.property('timestamp');",
+					"        });",
+					"    }",
 					"}"
 				]
 			}

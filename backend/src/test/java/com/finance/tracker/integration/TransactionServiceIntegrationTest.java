@@ -76,7 +76,7 @@ class TransactionServiceIntegrationTest {
                 .build();
 
         // When
-        TransactionDto savedDto = transactionService.createTransaction(dto);
+        TransactionDto savedDto = transactionService.createTransactionDto(dto);
 
         // Then
         assertThat(savedDto).isNotNull();
@@ -98,12 +98,10 @@ class TransactionServiceIntegrationTest {
                 .description("Test transaction for retrieval")
                 .build();
         
-        transactionService.createTransaction(dto);
-
+        transactionService.createTransactionDto(dto);
+        
         // When
-        var transactions = transactionService.getAllTransactions();
-
-        // Then
+        var transactions = transactionService.getAllTransactionDtos();        // Then
         assertThat(transactions).isNotNull();
         assertThat(transactions).hasSize(1);
         assertThat(transactions.get(0).getAmount()).isEqualTo(100.0);
@@ -119,7 +117,7 @@ class TransactionServiceIntegrationTest {
                 .category("First User Income")
                 .build();
         
-        TransactionDto savedTransaction = transactionService.createTransaction(firstUserTransaction);
+        TransactionDto savedTransaction = transactionService.createTransactionDto(firstUserTransaction);
         assertThat(savedTransaction.getId()).isNotNull(); // Verify transaction was created
 
         // Create second user in a separate transaction to ensure persistence
@@ -139,7 +137,7 @@ class TransactionServiceIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(secondAuth);
 
         // When - Get transactions as second user
-        var secondUserTransactions = transactionService.getAllTransactions();
+        var secondUserTransactions = transactionService.getAllTransactionDtos();
 
         // Then - Should be empty for second user
         assertThat(secondUserTransactions).isEmpty();
@@ -150,7 +148,7 @@ class TransactionServiceIntegrationTest {
                 new UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(firstAuth);
         
-        var firstUserTransactions = transactionService.getAllTransactions();
+        var firstUserTransactions = transactionService.getAllTransactionDtos();
         assertThat(firstUserTransactions).hasSize(1);
         assertThat(firstUserTransactions.get(0).getCategory()).isEqualTo("First User Income");
     }

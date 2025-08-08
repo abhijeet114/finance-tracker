@@ -35,9 +35,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/ApiResponse'
         '400':
           description: Registration failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
           
   /api/auth/login:
     post:
@@ -58,9 +62,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/ApiResponse'
         '400':
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
           
   # User endpoints
   /api/user/profile:
@@ -77,9 +85,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
 
   /api/transactions:
     get:
@@ -95,13 +107,19 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     
     post:
       tags:
@@ -115,20 +133,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Transaction'
+              $ref: '#/components/schemas/TransactionRequest'
       responses:
         '201':
           description: Transaction created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/ApiResponse'
         '400':
           description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
 
   /api/transactions/{id}:
     get:
@@ -151,13 +181,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '404':
           description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     
     put:
       tags:
@@ -178,20 +220,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Transaction'
+              $ref: '#/components/schemas/TransactionRequest'
       responses:
         '200':
           description: Transaction updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '404':
           description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
     
     delete:
       tags:
@@ -210,16 +270,106 @@ paths:
       responses:
         '204':
           description: Transaction deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '404':
           description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
 
 components:
   schemas:
-    Transaction:
+    # Universal API Response schema for ALL endpoints
+    ApiResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - path
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+          example: 200
+        error:
+          type: string
+          description: Error type (empty string for success responses, error type for failures)
+          example: ""
+        message:
+          type: string
+          description: Response message
+          example: "Success"
+        path:
+          type: string
+          description: API endpoint path
+          example: "/api/auth/login"
+        body:
+          type: object
+          description: Response data (populated for success, null for errors)
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2025-08-07T10:57:12.072"
+
+    # Data schemas (used within the body field)
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        type:
+          type: string
+          default: "Bearer"
+          description: Token type
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          description: User role
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+
+    TransactionRequest:
       type: object
       required:
         - amount
@@ -229,6 +379,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          description: Transaction ID
         amount:
           type: number
           format: double
@@ -236,7 +387,7 @@ components:
         type:
           type: string
           enum: [INCOME, EXPENSE]
-          description: Type of transaction
+          description: Transaction type
         category:
           type: string
           description: Transaction category
@@ -248,7 +399,33 @@ components:
           format: date-time
           description: Transaction date and time
 
-    # Authentication DTOs
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Transaction ID
+        amount:
+          type: number
+          format: double
+          description: Transaction amount
+        type:
+          type: string
+          enum: [INCOME, EXPENSE]
+          description: Transaction type
+        category:
+          type: string
+          description: Transaction category
+        description:
+          type: string
+          description: Transaction description
+        dateTime:
+          type: string
+          format: date-time
+          description: Transaction date and time
+
+    # Authentication request DTOs
     RegisterRequest:
       type: object
       required:
@@ -279,45 +456,6 @@ components:
         password:
           type: string
           description: User password
-          
-    AuthResponse:
-      type: object
-      properties:
-        token:
-          type: string
-          description: JWT access token
-        type:
-          type: string
-          default: "Bearer"
-          description: Token type
-        username:
-          type: string
-          description: Username
-        email:
-          type: string
-          description: User email
-          
-    UserProfile:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: User ID
-        username:
-          type: string
-          description: Username
-        email:
-          type: string
-          description: User email
-        role:
-          type: string
-          enum: [USER, ADMIN]
-          description: User role
-        createdAt:
-          type: string
-          format: date-time
-          description: Account creation timestamp
 
   securitySchemes:
     bearerAuth:

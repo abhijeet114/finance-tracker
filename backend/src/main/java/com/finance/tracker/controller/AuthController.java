@@ -1,10 +1,11 @@
 package com.finance.tracker.controller;
 
 import com.finance.tracker.api.AuthenticationApi;
-import com.finance.tracker.dto.auth.AuthResponse;
-import com.finance.tracker.dto.auth.LoginRequest;
-import com.finance.tracker.dto.auth.RegisterRequest;
+import com.finance.tracker.model.ModelApiResponse;
 import com.finance.tracker.service.AuthService;
+import com.finance.tracker.util.ResponseBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,51 +17,42 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class AuthController implements AuthenticationApi {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private AuthService authService;
 
     @Override
-    public ResponseEntity<com.finance.tracker.model.AuthResponse> loginUser(
+    public ResponseEntity<ModelApiResponse> loginUser(
             com.finance.tracker.model.LoginRequest loginRequest) {
-        // Convert from generated model to DTO
-        LoginRequest dto = LoginRequest.builder()
-                .username(loginRequest.getUsername())
-                .password(loginRequest.getPassword())
-                .build();
-        
-        AuthResponse response = authService.login(dto);
-        
-        // Convert response back to generated model
-        com.finance.tracker.model.AuthResponse modelResponse = 
-                new com.finance.tracker.model.AuthResponse()
-                        .token(response.getToken())
-                        .type(response.getType())
-                        .username(response.getUsername())
-                        .email(response.getEmail());
-        
-        return ResponseEntity.ok(modelResponse);
+        logger.info("Login attempt for username: {}", loginRequest.getUsername());
+        try {
+            // Delegate to service layer for all business logic and model conversion
+            com.finance.tracker.model.AuthResponse authData = authService.login(loginRequest);
+            
+            logger.info("Login successful for username: {}", loginRequest.getUsername());
+            return ResponseBuilder.success(authData, "Login successful");
+            
+        } catch (Exception e) {
+            logger.warn("Login failed for username {}: {}", loginRequest.getUsername(), e.getMessage());
+            return ResponseBuilder.error(400, "Bad Request", "Invalid username or password");
+        }
     }
 
     @Override
-    public ResponseEntity<com.finance.tracker.model.AuthResponse> registerUser(
+    public ResponseEntity<ModelApiResponse> registerUser(
             com.finance.tracker.model.RegisterRequest registerRequest) {
-        // Convert from generated model to DTO
-        RegisterRequest dto = RegisterRequest.builder()
-                .username(registerRequest.getUsername())
-                .email(registerRequest.getEmail())
-                .password(registerRequest.getPassword())
-                .build();
-        
-        AuthResponse response = authService.register(dto);
-        
-        // Convert response back to generated model
-        com.finance.tracker.model.AuthResponse modelResponse = 
-                new com.finance.tracker.model.AuthResponse()
-                        .token(response.getToken())
-                        .type(response.getType())
-                        .username(response.getUsername())
-                        .email(response.getEmail());
-        
-        return ResponseEntity.ok(modelResponse);
+        logger.info("Registration attempt for username: {}", registerRequest.getUsername());
+        try {
+            // Delegate to service layer for all business logic and model conversion
+            com.finance.tracker.model.AuthResponse authData = authService.register(registerRequest);
+            
+            logger.info("Registration successful for username: {}", registerRequest.getUsername());
+            return ResponseBuilder.success(201, authData, "Registration successful");
+            
+        } catch (Exception e) {
+            logger.warn("Registration failed for username {}: {}", registerRequest.getUsername(), e.getMessage());
+            return ResponseBuilder.error(400, "Bad Request", "Registration failed: " + e.getMessage());
+        }
     }
 }

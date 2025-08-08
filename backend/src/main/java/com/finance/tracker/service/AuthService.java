@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Authentication service for user registration and login
+ * Handles all business logic and model conversions
  */
 @Service
 public class AuthService {
@@ -33,7 +34,54 @@ public class AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    public AuthResponse register(RegisterRequest request) {
+    /**
+     * Register a new user
+     * @param loginRequest the login request from OpenAPI model
+     * @return AuthResponse for the OpenAPI model
+     */
+    public com.finance.tracker.model.AuthResponse login(com.finance.tracker.model.LoginRequest loginRequest) {
+        // Convert from OpenAPI model to DTO
+        LoginRequest dto = LoginRequest.builder()
+                .username(loginRequest.getUsername())
+                .password(loginRequest.getPassword())
+                .build();
+        
+        // Process login
+        AuthResponse response = performLogin(dto);
+        
+        // Convert back to OpenAPI model
+        return new com.finance.tracker.model.AuthResponse()
+                .token(response.getToken())
+                .type(response.getType())
+                .username(response.getUsername())
+                .email(response.getEmail());
+    }
+
+    /**
+     * Register a new user
+     * @param registerRequest the registration request from OpenAPI model
+     * @return AuthResponse for the OpenAPI model
+     */
+    public com.finance.tracker.model.AuthResponse register(com.finance.tracker.model.RegisterRequest registerRequest) {
+        // Convert from OpenAPI model to DTO
+        RegisterRequest dto = RegisterRequest.builder()
+                .username(registerRequest.getUsername())
+                .email(registerRequest.getEmail())
+                .password(registerRequest.getPassword())
+                .build();
+        
+        // Process registration
+        AuthResponse response = performRegistration(dto);
+        
+        // Convert back to OpenAPI model
+        return new com.finance.tracker.model.AuthResponse()
+                .token(response.getToken())
+                .type(response.getType())
+                .username(response.getUsername())
+                .email(response.getEmail());
+    }
+
+    private AuthResponse performRegistration(RegisterRequest request) {
         // Check if user already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username is already taken!");
@@ -58,12 +106,13 @@ public class AuthService {
 
         return AuthResponse.builder()
                 .token(token)
+                .type("Bearer")
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
     }
 
-    public AuthResponse login(LoginRequest request) {
+    private AuthResponse performLogin(LoginRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -77,6 +126,7 @@ public class AuthService {
 
             return AuthResponse.builder()
                     .token(token)
+                    .type("Bearer")
                     .username(user.getUsername())
                     .email(user.getEmail())
                     .build();

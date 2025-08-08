@@ -3,7 +3,8 @@ package com.finance.tracker.mapper;
 import com.finance.tracker.dto.TransactionDto;
 import com.finance.tracker.entity.TransactionEntity;
 import com.finance.tracker.entity.TransactionType;
-import com.finance.tracker.model.Transaction;
+import com.finance.tracker.model.TransactionRequest;
+import com.finance.tracker.model.TransactionResponse;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -28,10 +29,10 @@ class TransactionMapperTest {
     @Test
     void testApiModelToDto_ShouldMapAllFields() {
         // Given
-        Transaction apiModel = new Transaction();
+        TransactionRequest apiModel = new TransactionRequest();
         apiModel.setId(UUID.randomUUID());
         apiModel.setAmount(100.50);
-        apiModel.setType(Transaction.TypeEnum.INCOME);
+        apiModel.setType(TransactionRequest.TypeEnum.INCOME);
         apiModel.setCategory("Salary");
         apiModel.setDescription("Monthly salary");
         apiModel.setDateTime(OffsetDateTime.now().minusDays(1));
@@ -52,10 +53,10 @@ class TransactionMapperTest {
     @Test
     void testApiModelToDto_WithNullValues_ShouldHandleGracefully() {
         // Given
-        Transaction apiModel = new Transaction();
+        TransactionRequest apiModel = new TransactionRequest();
         apiModel.setId(UUID.randomUUID());
         apiModel.setAmount(null);
-        apiModel.setType(Transaction.TypeEnum.EXPENSE);
+        apiModel.setType(TransactionRequest.TypeEnum.EXPENSE);
         apiModel.setCategory(null);
         apiModel.setDescription(null);
         apiModel.setDateTime(null);
@@ -86,13 +87,13 @@ class TransactionMapperTest {
                 .build();
 
         // When
-        Transaction apiModel = mapper.dtoToApiModel(dto);
+        TransactionResponse apiModel = mapper.dtoToApiModel(dto);
 
         // Then
         assertThat(apiModel).isNotNull();
         assertThat(apiModel.getId()).isEqualTo(dto.getId());
         assertThat(apiModel.getAmount()).isEqualTo(dto.getAmount());
-        assertThat(apiModel.getType()).isEqualTo(Transaction.TypeEnum.EXPENSE);
+        assertThat(apiModel.getType()).isEqualTo(TransactionResponse.TypeEnum.EXPENSE);
         assertThat(apiModel.getCategory()).isEqualTo(dto.getCategory());
         assertThat(apiModel.getDescription()).isEqualTo(dto.getDescription());
         assertThat(apiModel.getDateTime()).isEqualTo(dto.getDateTime().atOffset(ZoneOffset.UTC));
@@ -194,10 +195,10 @@ class TransactionMapperTest {
     @Test
     void testApiModelsToDtos_ShouldMapAllElements() {
         // Given
-        List<Transaction> apiModels = Arrays.asList(
-                createTestApiModel(100.0, Transaction.TypeEnum.INCOME),
-                createTestApiModel(50.0, Transaction.TypeEnum.EXPENSE),
-                createTestApiModel(75.0, Transaction.TypeEnum.INCOME)
+        List<TransactionRequest> apiModels = Arrays.asList(
+                createTestApiModel(100.0, TransactionRequest.TypeEnum.INCOME),
+                createTestApiModel(50.0, TransactionRequest.TypeEnum.EXPENSE),
+                createTestApiModel(75.0, TransactionRequest.TypeEnum.INCOME)
         );
 
         // When
@@ -301,8 +302,8 @@ class TransactionMapperTest {
     // Helper Methods
     // ========================================
 
-    private Transaction createTestApiModel(double amount, Transaction.TypeEnum type) {
-        Transaction transaction = new Transaction();
+    private TransactionRequest createTestApiModel(double amount, TransactionRequest.TypeEnum type) {
+        TransactionRequest transaction = new TransactionRequest();
         transaction.setId(UUID.randomUUID());
         transaction.setAmount(amount);
         transaction.setType(type);
